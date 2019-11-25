@@ -5,7 +5,7 @@ window.addEventListener('load', function () {
     dataTypes: [
       {
         alias: 'temperature',
-        label: 'Темпиратура',
+        label: 'Температура',
         route: '/data/temperature.json',
       },
       {
