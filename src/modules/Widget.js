@@ -6,6 +6,7 @@ const Widget = (function () {
     this.$elems = {
       dataTypesSelector: this.$block.querySelector(Widget.selectors.elems.dataTypesSelector),
       filters: this.$block.querySelector(Widget.selectors.elems.filters),
+      loader: this.$block.querySelector(Widget.selectors.elems.loader),
       viewport: this.$block.querySelector(Widget.selectors.elems.viewport),
     };
 
@@ -145,11 +146,21 @@ const Widget = (function () {
     }
   };
 
+  Widget.prototype._showLoader = function () {
+    this.$elems.loader.classList.remove(Widget.classNames.isHidden);
+  };
+
+  Widget.prototype._hideLoader = function () {
+    this.$elems.loader.classList.add(Widget.classNames.isHidden);
+  };
+
   /**
    * @private
    */
   Widget.prototype._drawChart = function () {
     const _this = this;
+
+    this._showLoader();
 
     this.dataProvider.getData(this._getDataType(), this._getFilters(), function (error, data) {
       if (error) {
@@ -157,11 +168,17 @@ const Widget = (function () {
       } else {
         _this.graph.draw(data);
       }
+
+      _this._hideLoader();
     });
   };
 
   Widget.prototype._renderError = function (error) {
     console.log(error); // @todo Map and output the error.
+  };
+
+  Widget.classNames = {
+    isHidden: 'is-hidden',
   };
 
   Widget.selectors = {
@@ -170,6 +187,7 @@ const Widget = (function () {
       dataTypeControl: '.widget__data-type-control',
       dataTypesSelector: '.widget__data-types-selector',
       filters: '.widget__filters',
+      loader: '.widget__loader',
       viewport: '.widget__viewport',
     },
   };
@@ -181,7 +199,7 @@ const Widget = (function () {
           types
             .map(function (type, index) {
               return '' +
-                '<li class="widget__data-type">' +
+                '<li class="widget__data-type widget__data-type_type_' + type.alias + '">' +
                   '<input' +
                     (index === 0 ? ' checked="checked"' : '') +
                     ' class="widget__data-type-control"' +

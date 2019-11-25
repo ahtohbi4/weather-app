@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Parcel Sandbox</title>
   <meta charset="utf-8">
+  <title>Архив метеослужбы</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="format-detection" content="telephone=no">
 
   <link href="styles.css" rel="stylesheet">
 
@@ -17,13 +20,24 @@
     <h1 class="page__title">Архив метеослужбы</h1>
 
     <div class="widget">
-      <div class="widget__aside widget__data-types-selector"></div>
-
-      <form class="widget__filters"></form>
-
-      <div class="widget__viewport">
-        График
+      <div class="widget__aside">
+        <div class="widget__data-types-selector"></div>
       </div>
+
+      <div class="widget__content">
+        <form class="widget__filters"></form>
+
+        <div class="widget__viewport">
+          <div class="widget__loader hidden">
+            <h4 class="widget__loader-title">Подготовка данных…</h4>
+            Это займет совсем немного времени &#x1F609
+          </div>
+        </div>
+      </div>
+
+      <footer class="widget__footer">
+        2019 <a class="widget__footer-link" href="https://github.com/ahtohbi4">@ahtohbi4</a>
+      </footer>
     </div>
   </main>
 </body>

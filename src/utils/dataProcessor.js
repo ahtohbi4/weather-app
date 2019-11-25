@@ -93,13 +93,9 @@ Store.prototype._getStoredData = function (dataType, filters, cb) {
             .transaction(dataType, 'readwrite')
             .objectStore(dataType);
 
-          for (let i = 0; i < response.length / 10; i++) { // @todo Remove hard code "response.length / 10".
-            objectStore.add(response[i]);
-
-            objectStore.onerror = function (event) {
-              console.log('= objectStore.onerror:', event.target.error.name)
-            }
-          }
+          response.forEach(function (item) {
+            objectStore.add(item);
+          });
 
           const dataRequest = objectStore.getAll(Store.getKeyRange(filters));
 

@@ -10,19 +10,36 @@ const Graph = (function () {
       throw new Error('Canvas is not supported.');
     }
 
-    this.$container.innerHTML = '';
     this.$container.appendChild(canvas);
 
     this.canvas = canvas.getContext('2d');
 
-    this._updateSize();
+    this._init();
   }
+
+  /**
+   * @param data
+   */
+  Graph.prototype.draw = function (data) {
+    this._clear();
+
+    this._drawChart(data);
+    this._drawAxis(data);
+  };
+
+  Graph.prototype._init = function () {
+    this._updateSize();
+  };
 
   Graph.prototype._updateSize = function () {
     const containerSize = this.canvas.canvas.parentNode.getBoundingClientRect();
+    const devicePixelRatio = window.devicePixelRatio || 1;
 
-    this.canvas.canvas.width = containerSize.width;
-    this.canvas.canvas.height = containerSize.height;
+    this.canvas.canvas.width = containerSize.width * devicePixelRatio;
+    this.canvas.canvas.style.width = String(containerSize.width) + 'px';
+    this.canvas.canvas.height = containerSize.height * devicePixelRatio;
+    this.canvas.canvas.style.height = String(containerSize.height) + 'px';
+    this.canvas.scale(devicePixelRatio, devicePixelRatio);
   };
 
   Graph.prototype._getSize = function () {
@@ -60,7 +77,7 @@ const Graph = (function () {
 
   Graph.prototype._drawBar = function (x, y, width, height) {
     const isPositive = (height >= 0);
-    const color = isPositive ? 'rgb(200, 0, 0)' : 'rgba(0, 0, 200, .5)';
+    const color = isPositive ? Graph.COLORS.positive : Graph.COLORS.negative;
     const fromX = x;
     const fromY = isPositive ? (y - height) : y;
 
@@ -72,12 +89,12 @@ const Graph = (function () {
     this.canvas.beginPath();
     this.canvas.moveTo(fromX, fromY);
     this.canvas.lineTo(toX, toY);
-    this.canvas.strokeStyle = 'rgb(0, 0, 0)';
+    this.canvas.strokeStyle = Graph.COLORS.axis;
     this.canvas.stroke();
   };
 
   Graph.prototype._drawText = function (text, x, y) {
-    this.canvas.fillStyle = 'rgb(0, 0, 0)';
+    this.canvas.fillStyle = Graph.COLORS.axis;
     this.canvas.fillText(text, x, y);
   };
 
@@ -146,14 +163,10 @@ const Graph = (function () {
     }
   };
 
-  /**
-   * @param data
-   */
-  Graph.prototype.draw = function (data) {
-    this._clear();
-
-    this._drawChart(data);
-    this._drawAxis(data);
+  Graph.COLORS = {
+    axis: '#fff',
+    negative: '#008cff',
+    positive: '#ff2e1c',
   };
 
   return Graph;

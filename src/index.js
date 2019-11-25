@@ -1,4 +1,4 @@
-(function () {
+window.addEventListener('load', function () {
   'use strict';
 
   new Widget({
@@ -16,4 +16,4 @@
     ],
     yearsRange: [1881, 2006],
   });
-})();
+});
