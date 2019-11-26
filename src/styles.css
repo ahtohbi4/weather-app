@@ -130,11 +130,11 @@ body {
 }
 
 .widget__data-type_type_precipitation .widget__data-type-label {
-  background-image: url(/images/precipitation.svg);
+  background-image: url(./images/precipitation.svg);
 }
 
 .widget__data-type_type_temperature .widget__data-type-label {
-  background-image: url(/images/temperature.svg);
+  background-image: url(./images/temperature.svg);
 }
 
 .widget__content {
@@ -171,7 +171,7 @@ body {
   padding: .5rem 2rem .5rem 1rem;
   box-sizing: border-box;
   background-color: #fff;
-  background-image: url(/images/calendar.svg);
+  background-image: url(./images/calendar.svg);
   background-position: right .5rem top 50%;
   background-repeat: no-repeat;
   border: 0;

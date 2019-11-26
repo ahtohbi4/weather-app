@@ -117,7 +117,7 @@ Store.prototype._getStoredData = function (dataType, filters, cb) {
 Store.prototype._fetchData = function (route, cb) {
   const xhr = new XMLHttpRequest();
 
-  xhr.open('GET', route);
+  xhr.open('GET', '../' + route);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.send();
   xhr.addEventListener('readystatechange', function () {
