@@ -1,6 +1,18 @@
 const Graph = (function () {
   'use strict';
 
+  /**
+   * Type of a data.
+   *
+   * @typedef {Object} DataType.
+   * @property {Array} data
+   * @property {Object.<{minValue: number, maxValue: number}>} meta
+   */
+
+  /**
+   * @param {HTMLElement} $container
+   * @constructor
+   */
   function Graph($container) {
     this.$container = $container;
 
@@ -18,7 +30,9 @@ const Graph = (function () {
   }
 
   /**
-   * @param data
+   * Visualizes the passing data.
+   *
+   * @param {DataType} data - A data for visualization.
    */
   Graph.prototype.draw = function (data) {
     this._clear();
@@ -27,10 +41,20 @@ const Graph = (function () {
     this._drawAxis(data);
   };
 
+  /**
+   * Initializes a Graph.
+   *
+   * @private
+   */
   Graph.prototype._init = function () {
     this._updateSize();
   };
 
+  /**
+   * Updates size of the canvas.
+   *
+   * @private
+   */
   Graph.prototype._updateSize = function () {
     const containerSize = this.canvas.canvas.parentNode.getBoundingClientRect();
     const devicePixelRatio = window.devicePixelRatio || 1;
@@ -42,6 +66,12 @@ const Graph = (function () {
     this.canvas.scale(devicePixelRatio, devicePixelRatio);
   };
 
+  /**
+   * Gets the size of canvas.
+   *
+   * @returns {Object.<{width: number, height: number}>}
+   * @private
+   */
   Graph.prototype._getSize = function () {
     const rect = this.canvas.canvas.getBoundingClientRect();
 
@@ -51,6 +81,12 @@ const Graph = (function () {
     };
   };
 
+  /**
+   * Gets the size of the graph area and offsets of this area from the edges of the canvas.
+   *
+   * @returns {Array.<{top: number, left: number, bottom: number, width: number, right: number, height: number}>}
+   * @private
+   */
   Graph.prototype._getGraphContainer = function () {
     const offsetTop = 20;
     const offsetRight = 20;
@@ -69,12 +105,26 @@ const Graph = (function () {
     };
   };
 
+  /**
+   * Clears the canvas.
+   *
+   * @private
+   */
   Graph.prototype._clear = function () {
     const size = this._getSize();
 
     this.canvas.clearRect(0, 0, size.width, size.height);
   };
 
+  /**
+   * Draws a bar.
+   *
+   * @param {number} x - A start X coordinate.
+   * @param {number} y - A start Y coordinate.
+   * @param {number} width - A width of the bar.
+   * @param {number} height - A height of the bar.
+   * @private
+   */
   Graph.prototype._drawBar = function (x, y, width, height) {
     const isPositive = (height >= 0);
     const color = isPositive ? Graph.COLORS.positive : Graph.COLORS.negative;
@@ -85,6 +135,15 @@ const Graph = (function () {
     this.canvas.fillRect(fromX, fromY, width, Math.abs(height));
   };
 
+  /**
+   * Draws a line.
+   *
+   * @param {number} fromX - A start X coordinate.
+   * @param {number} fromY - A start Y coordinate.
+   * @param {number} toX - An end X coordinate.
+   * @param {number} toY - An end Y coordinate.
+   * @private
+   */
   Graph.prototype._drawLine = function (fromX, fromY, toX, toY) {
     this.canvas.beginPath();
     this.canvas.moveTo(fromX, fromY);
@@ -93,11 +152,26 @@ const Graph = (function () {
     this.canvas.stroke();
   };
 
+  /**
+   * Draws a text.
+   *
+   * @param {string} text - A text to draw.
+   * @param {number} x - An X coordinate.
+   * @param {number} y - An Y coordinate.
+   * @private
+   */
   Graph.prototype._drawText = function (text, x, y) {
     this.canvas.fillStyle = Graph.COLORS.axis;
     this.canvas.fillText(text, x, y);
   };
 
+  /**
+   * Calculates a scale of data to the canvas sizes.
+   *
+   * @param {DataType} data
+   * @returns {Object.<{scaleY: number, amplitude: number}>}
+   * @private
+   */
   Graph.prototype._calculateScale = function (data) {
     const graphContainer = this._getGraphContainer();
 
@@ -109,16 +183,26 @@ const Graph = (function () {
     };
   };
 
-  Graph.prototype._drawAxisX = function (data) {
+  /**
+   * Draws the X-axis.
+   *
+   * @private
+   */
+  Graph.prototype._drawAxisX = function () {
     const graphContainer = this._getGraphContainer();
     const fromX = graphContainer.left;
     const fromY = graphContainer.top + (graphContainer.height / 2);
     const toX = graphContainer.left + graphContainer.width;
-    const toY = fromY;
 
-    this._drawLine(fromX, fromY, toX, toY);
+    this._drawLine(fromX, fromY, toX, fromY);
   };
 
+  /**
+   * Draw the Y-axis.
+   *
+   * @param {DataType} data
+   * @private
+   */
   Graph.prototype._drawAxisY = function (data) {
     const graphContainer = this._getGraphContainer();
     const scale = this._calculateScale(data);
@@ -143,11 +227,23 @@ const Graph = (function () {
     }
   };
 
+  /**
+   * Draws the axis.
+   *
+   * @param {DataType} data
+   * @private
+   */
   Graph.prototype._drawAxis = function (data) {
     this._drawAxisX(data);
     this._drawAxisY(data);
   };
 
+  /**
+   * Draw the chart.
+   *
+   * @param {DataType} data
+   * @private
+   */
   Graph.prototype._drawChart = function (data) {
     const graphContainer = this._getGraphContainer();
     const scale = this._calculateScale(data);

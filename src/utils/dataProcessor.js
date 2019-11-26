@@ -7,6 +7,12 @@ function Store() {
   this.routes = null;
 }
 
+/**
+ * Configures the storage.
+ *
+ * @param {Object} config
+ * @param {Object.<string, string>} config.routes - Routes to the data type in API.
+ */
 Store.prototype.config = function (config) {
   this.routes = config.routes;
 };
@@ -48,6 +54,14 @@ Store.prototype.getData = function (dataType, filters, cb) {
   }
 };
 
+/**
+ * Gets the stored data.
+ *
+ * @param {string} dataType
+ * @param {Object} filters
+ * @param {function} cb
+ * @private
+ */
 Store.prototype._getStoredData = function (dataType, filters, cb) {
   const _this = this;
   const openedDB = indexedDB.open(Store.DB_NAME, 1);
@@ -114,6 +128,13 @@ Store.prototype._getStoredData = function (dataType, filters, cb) {
   });
 };
 
+/**
+ * Fetches data from API.
+ *
+ * @param {string} route - Route to the data type in API.
+ * @param {call} cb - A callback function that fired after receiving data or error.
+ * @private
+ */
 Store.prototype._fetchData = function (route, cb) {
   const xhr = new XMLHttpRequest();
 
@@ -141,6 +162,12 @@ Store.prototype._fetchData = function (route, cb) {
 
 Store.DB_NAME = 'weather';
 
+/**
+ * Returns a type of limit by filters for data.
+ *
+ * @param {Object} filters
+ * @returns {IDBKeyRange|undefined}
+ */
 Store.getKeyRange = function (filters) {
   const lowerBound = filters.from;
   const upperBound = filters.to ? (filters.to + 1) : filters.to;
@@ -160,6 +187,12 @@ Store.getKeyRange = function (filters) {
   return undefined;
 };
 
+/**
+ * Adds to data a meta-information.
+ *
+ * @param {Array} data - A data to process.
+ * @returns {Object.<{data: Array, meta: {minValue: number, maxValue: number}}>}
+ */
 Store.processData = function (data) {
   data = data || [];
 

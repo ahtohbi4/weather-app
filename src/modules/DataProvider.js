@@ -8,7 +8,9 @@ const DataProvider = (function () {
    */
 
   /**
-   * @class
+   * @param {Object} config
+   * @param {Object.<string, string>} config.routes - Routes to the data type in API.
+   * @constructor
    */
   function DataProvider(config = {}) {
     this.routes = config.routes;

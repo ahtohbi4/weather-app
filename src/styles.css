@@ -61,16 +61,30 @@ body {
 .widget {
   display: grid;
   grid-template-areas:
+    'error error'
     'aside content'
     'footer content';
   grid-template-columns: minmax(auto, .25fr) 1fr;
-  grid-template-rows: minmax(150px, 1fr) auto;
+  grid-template-rows: minmax(0, auto) minmax(150px, 1fr) auto;
 }
 
 @media (max-width: 700px) {
   .widget {
     display: block;
   }
+}
+
+.widget__error {
+  display: block;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #ff2e1c;
+  border-radius: .25rem;
+  grid-area: error;
+}
+
+.widget__error:empty {
+  display: none;
 }
 
 .widget__aside {
@@ -207,9 +221,6 @@ body {
   display: flex;
   position: relative;
   border-radius: .25rem;
-  box-shadow:
-    0 0 2px rgba(0, 0, 0, .1),
-    0 0 10px rgba(0, 0, 0, .1);
   align-items: center;
   justify-content: center;
   flex-grow: 1;

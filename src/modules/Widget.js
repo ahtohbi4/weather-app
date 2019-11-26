@@ -5,6 +5,7 @@ const Widget = (function () {
     this.$block = document.querySelector(Widget.selectors.block);
     this.$elems = {
       dataTypesSelector: this.$block.querySelector(Widget.selectors.elems.dataTypesSelector),
+      error: this.$block.querySelector(Widget.selectors.elems.error),
       filters: this.$block.querySelector(Widget.selectors.elems.filters),
       loader: this.$block.querySelector(Widget.selectors.elems.loader),
       viewport: this.$block.querySelector(Widget.selectors.elems.viewport),
@@ -46,13 +47,21 @@ const Widget = (function () {
     this.$elems.dataTypesSelector.innerHTML = Widget.templates.renderDataTypesSelector(this.dataTypes);
     this.$elems.dataTypesSelector.onchange = this._handleChangeDataType;
 
+    const _this = this;
     const yearFrom = this.yearsRange[0];
     const yearTo = this.yearsRange[1];
-    const renderYearSelect = function (name, selectedValue) {
-      return Widget.templates.renderFilterYear(name, yearFrom, yearTo, selectedValue);
+    const renderYearSelect = function (name, label, selectedValue) {
+      return Widget.templates.renderFilterYear({
+        label: label,
+        name: name,
+        range: _this.yearsRange,
+        selectedValue: selectedValue,
+      });
     };
 
-    this.$elems.filters.innerHTML = renderYearSelect('from', yearFrom) + renderYearSelect('to', yearTo);
+    this.$elems.filters.innerHTML =
+      renderYearSelect('from', 'За период с (год)', yearFrom) +
+      renderYearSelect('to', 'по (год)',  yearTo);
 
     this.$elems.filters.onchange = this._handleChangeFilter;
 
@@ -174,7 +183,10 @@ const Widget = (function () {
   };
 
   Widget.prototype._renderError = function (error) {
-    console.log(error); // @todo Map and output the error.
+    const code = error.code;
+    const message = code ? code : error.message;
+
+    this.$elems.error.innerHTML = 'Ошибка: ' + message;
   };
 
   Widget.classNames = {
@@ -186,6 +198,7 @@ const Widget = (function () {
     elems: {
       dataTypeControl: '.widget__data-type-control',
       dataTypesSelector: '.widget__data-types-selector',
+      error: '.widget__error',
       filters: '.widget__filters',
       loader: '.widget__loader',
       viewport: '.widget__viewport',
@@ -217,20 +230,23 @@ const Widget = (function () {
             .join('') +
         '</ul>';
     },
-    renderFilterYear: function (name, from, to, selectedValue) {
+    renderFilterYear: function (params) {
       const years = [];
+      const range = params.range;
 
-      for (let year = Number(from); year <= Number(to); year++) {
+      for (let year = Number(range[0]); year <= Number(range[1]); year++) {
         years.push(year);
       }
 
       return '' +
-        '<select class="widget__filter" name="' + name + '">' +
+        '<select' +
+          ' class="widget__filter" name="' + params.name + '"' +
+          ' aria-label="' + params.label + '">' +
           years
             .map(function (year) {
               return '' +
                 '<option' +
-                  (year === selectedValue ? ' selected="selected"' : '') +
+                  (year === params.selectedValue ? ' selected="selected"' : '') +
                   ' value="' + year + '">' +
                   year +
                 '</option>';
