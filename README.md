@@ -3,6 +3,8 @@ weather-app
 
 > Тестовое web-приложение, имитирующее визуализацию архива метеослужбы.
 
+[Demo](https://ahtohbi4.github.io/weather-app/src/)
+
 Запуск
 ---
 
