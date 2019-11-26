@@ -10,7 +10,7 @@
     "name": "Alexander Antonov",
     "email": "alexandr-post@yandex.ru"
   },
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git@github.com:ahtohbi4/weather-app.git"
