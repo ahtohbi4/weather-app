@@ -22,7 +22,7 @@ Store.prototype.config = function (config) {
  *
  * @param {string} dataType
  * @param {Object} [filters={}]
- * @param {function} cb
+ * @param {function(Object.<{code: string}>|Error, *?)} cb
  */
 Store.prototype.getData = function (dataType, filters, cb) {
   if (this.routes === null) {
@@ -59,7 +59,7 @@ Store.prototype.getData = function (dataType, filters, cb) {
  *
  * @param {string} dataType
  * @param {Object} filters
- * @param {function} cb
+ * @param {function(Object.<{code: string}>|Error, *?)} cb
  * @private
  */
 Store.prototype._getStoredData = function (dataType, filters, cb) {
@@ -132,7 +132,7 @@ Store.prototype._getStoredData = function (dataType, filters, cb) {
  * Fetches data from API.
  *
  * @param {string} route - Route to the data type in API.
- * @param {call} cb - A callback function that fired after receiving data or error.
+ * @param {function(Object.<{code: string}>|Error, *?)} cb
  * @private
  */
 Store.prototype._fetchData = function (route, cb) {
@@ -183,8 +183,6 @@ Store.getKeyRange = function (filters) {
   if (upperBound) {
     return IDBKeyRange.lowerBound(upperBound, false);
   }
-
-  return undefined;
 };
 
 /**

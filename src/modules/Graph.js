@@ -33,13 +33,19 @@ const Graph = (function () {
    * Visualizes the passing data.
    *
    * @param {DataType} data - A data for visualization.
+   * @param {Object} [options={}]
+   * @param {string} [options.units]
    */
-  Graph.prototype.draw = function (data) {
-    this._clear();
+  Graph.prototype.draw = function (data, options) {
+    options = options || {};
 
-    this._drawChart(data);
-    this._drawAxis(data);
-    this._drawGrid(data);
+    const units = options.units;
+
+    this
+      ._clear()
+      ._drawChart(data)
+      ._drawAxis(data, { units: units })
+      ._drawGrid(data);
   };
 
   /**
@@ -73,7 +79,7 @@ const Graph = (function () {
    * @returns {Object.<{width: number, height: number}>}
    * @private
    */
-  Graph.prototype._getSize = function () {
+  Graph.prototype._getContainerSize = function () {
     const rect = this.canvas.canvas.getBoundingClientRect();
 
     return {
@@ -85,7 +91,7 @@ const Graph = (function () {
   /**
    * Gets the size of the graph area and offsets of this area from the edges of the canvas.
    *
-   * @returns {Array.<{top: number, left: number, bottom: number, width: number, right: number, height: number}>}
+   * @returns {Object.<{top: number, left: number, bottom: number, width: number, right: number, height: number}>}
    * @private
    */
   Graph.prototype._getGraphContainer = function () {
@@ -93,7 +99,7 @@ const Graph = (function () {
     const offsetRight = 20;
     const offsetBottom = 20;
     const offsetLeft = 40;
-    const size = this._getSize();
+    const size = this._getContainerSize();
 
     return {
       bottom: (size.height - offsetBottom),
@@ -112,9 +118,11 @@ const Graph = (function () {
    * @private
    */
   Graph.prototype._clear = function () {
-    const size = this._getSize();
+    const size = this._getContainerSize();
 
     this.canvas.clearRect(0, 0, size.width, size.height);
+
+    return this;
   };
 
   /**
@@ -216,6 +224,7 @@ const Graph = (function () {
   /**
    * Draws the X-axis.
    *
+   * @param {DataType} data
    * @private
    */
   Graph.prototype._drawAxisX = function (data) {
@@ -233,9 +242,12 @@ const Graph = (function () {
   /**
    * Draw the Y-axis.
    *
+   * @param {DataType} data
+   * @param {Object} options
+   * @param {string} [options.units]
    * @private
    */
-  Graph.prototype._drawAxisY = function () {
+  Graph.prototype._drawAxisY = function (data, options) {
     const graphContainer = this._getGraphContainer();
     const fromX = graphContainer.left;
     const fromY = graphContainer.top;
@@ -244,6 +256,14 @@ const Graph = (function () {
 
     this._drawLine(fromX, fromY, toX, toY, { color: Graph.COLORS.axis });
 
+    const units = options.units;
+
+    if (units) {
+      const unitsX = 0;
+      const unitsY = graphContainer.top + (graphContainer.height / 2);
+      this._drawText(units, unitsX, unitsY, { baseLine: 'middle' });
+    }
+
     return this;
   };
 
@@ -251,14 +271,23 @@ const Graph = (function () {
    * Draws the axis.
    *
    * @param {DataType} data
+   * @param {Object} options
    * @private
    */
-  Graph.prototype._drawAxis = function (data) {
+  Graph.prototype._drawAxis = function (data, options) {
     this
       ._drawAxisX(data)
-      ._drawAxisY();
+      ._drawAxisY(data, options);
+
+    return this;
   };
 
+  /**
+   * Draws the horizontal grid.
+   *
+   * @param {DataType} data
+   * @private
+   */
   Graph.prototype._drawHorizontalGrid = function (data) {
     const MIN_GRID_HEIGHT = 50;
     const graphContainer = this._getGraphContainer();
@@ -311,8 +340,16 @@ const Graph = (function () {
           });
       }
     }
+
+    return this;
   };
 
+  /**
+   * Draws the vertical grid.
+   *
+   * @param {DataType} data
+   * @private
+   */
   Graph.prototype._drawVerticalGrid = function (data) {
     const _this = this;
     const MIN_GRID_WIDTH = 50;
@@ -352,6 +389,8 @@ const Graph = (function () {
         prevGridLinePosition = offsetFromLeft;
       }
     });
+
+    return this;
   };
 
   /**
@@ -361,8 +400,11 @@ const Graph = (function () {
    * @private
    */
   Graph.prototype._drawGrid = function (data) {
-    this._drawHorizontalGrid(data);
-    this._drawVerticalGrid(data);
+    this
+      ._drawHorizontalGrid(data)
+      ._drawVerticalGrid(data);
+
+    return this;
   };
 
   /**
@@ -384,8 +426,15 @@ const Graph = (function () {
 
       _this._drawBar(fromX, centerY, barWidth, barHeight);
     });
+
+    return this;
   };
 
+  /**
+   * The offset (horizontal or vertical) in pixels from an axis to a label.
+   *
+   * @type {number}
+   */
   Graph.GRID_LABEL_OFFSET = 10;
 
   /**

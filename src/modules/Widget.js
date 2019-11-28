@@ -1,6 +1,24 @@
 const Widget = (function () {
   'use strict';
 
+  /**
+   * Config of requesting data.
+   *
+   * @typedef {Object} DataTypeConfig
+   * @property {string} alias - An alias of data type.
+   * @property {string} label - A label to display in UI
+   * @property {string} route - A route to the data type in API.
+   * @property {string} [units] - Units to display in UI.
+   */
+
+  /**
+   * @param {Object} config
+   * @param {Array.<DataTypeConfig>} config.dataTypes
+   * @param {Array} config.yearsRange
+   * @param {number} config.yearsRange[0]
+   * @param {number} config.yearsRange[1]
+   * @constructor
+   */
   function Widget(config) {
     this.$block = document.querySelector(Widget.selectors.block);
     this.$elems = {
@@ -32,7 +50,7 @@ const Widget = (function () {
         return result;
       }, {}),
     });
-    this.graph = new Graph(this.$elems.viewport);
+    this.graph = null;
 
     this._handleChangeDataType = this._handleChangeDataType.bind(this);
     this._handleChangeFilter = this._handleChangeFilter.bind(this);
@@ -41,6 +59,8 @@ const Widget = (function () {
   }
 
   /**
+   * Initializes a Widget.
+   *
    * @private
    */
   Widget.prototype._init = function () {
@@ -65,10 +85,13 @@ const Widget = (function () {
 
     this.$elems.filters.onchange = this._handleChangeFilter;
 
+    this.graph = new Graph(this.$elems.viewport);
     this._drawChart();
   };
 
   /**
+   * Gets selected type of data.
+   *
    * @returns {string}
    * @private
    */
@@ -84,6 +107,25 @@ const Widget = (function () {
   };
 
   /**
+   * Gets details for the current data type.
+   *
+   * @returns {null|Object}
+   * @private
+   */
+  Widget.prototype._getDataTypeDetails = function () {
+    for (let i = 0; i <= this.dataTypes.length; i++) {
+      if (this.dataTypes[i].alias === this._getDataType()) {
+        return this.dataTypes[i];
+      }
+    }
+
+    return null;
+  };
+
+  /**
+   * Sets the filters.
+   *
+   * @param {Object.<string, number|string>} filters - Filters to the setting.
    * @private
    */
   Widget.prototype._setFilters = function (filters) {
@@ -91,7 +133,6 @@ const Widget = (function () {
     let lastUpdatedElement;
 
     Object.keys(filters).forEach(function (name) {
-      const value = filters[name];
       const element = Array.prototype.filter.call(_this.$elems.filters, function (element) {
         return (element.name === name);
       })[0];
@@ -116,7 +157,9 @@ const Widget = (function () {
   };
 
   /**
-   * @returns {Object}
+   * Gets current filters.
+   *
+   * @returns {Object.<string, number|string>}
    * @private
    */
   Widget.prototype._getFilters = function () {
@@ -132,6 +175,8 @@ const Widget = (function () {
   };
 
   /**
+   * Handles changing of the data type.
+   *
    * @private
    */
   Widget.prototype._handleChangeDataType = function () {
@@ -139,6 +184,8 @@ const Widget = (function () {
   };
 
   /**
+   * Handles changing of the filters.
+   *
    * @private
    */
   Widget.prototype._handleChangeFilter = function (event) {
@@ -155,15 +202,27 @@ const Widget = (function () {
     }
   };
 
+  /**
+   * Shows the loader.
+   *
+   * @private
+   */
   Widget.prototype._showLoader = function () {
     this.$elems.loader.classList.remove(Widget.classNames.isHidden);
   };
 
+  /**
+   * Hides the loader.
+   *
+   * @private
+   */
   Widget.prototype._hideLoader = function () {
     this.$elems.loader.classList.add(Widget.classNames.isHidden);
   };
 
   /**
+   * Draws a chart.
+   *
    * @private
    */
   Widget.prototype._drawChart = function () {
@@ -175,13 +234,21 @@ const Widget = (function () {
       if (error) {
         _this._renderError(error);
       } else {
-        _this.graph.draw(data);
+        const units = (_this._getDataTypeDetails() || {}).units;
+
+        _this.graph.draw(data, { units: units });
       }
 
       _this._hideLoader();
     });
   };
 
+  /**
+   * Displays an error.
+   *
+   * @param {Object.<{code: string, detail: *}>|Error} error
+   * @private
+   */
   Widget.prototype._renderError = function (error) {
     const code = error.code;
     const message = code || error.message || 'Что-то пошло не так. Пожалуйста, повторите попытку позднее.';
@@ -205,7 +272,18 @@ const Widget = (function () {
     },
   };
 
+  /**
+   * HTML templates.
+   *
+   * @type {Object.<string, function>}
+   */
   Widget.templates = {
+    /**
+     * Compiles a stringified HTML for a list of controls to select a data type.
+     *
+     * @param {Array.<Object.<{alias: string, label: string}>>} types
+     * @returns {string}
+     */
     renderDataTypesSelector: function (types) {
       return '' +
         '<ul class="widget__data-types">' +
@@ -230,6 +308,18 @@ const Widget = (function () {
             .join('') +
         '</ul>';
     },
+    /**
+     * Compiles a stringified HTML for a filters select.
+     *
+     * @param {Object} params
+     * @param {string} params.label
+     * @param {string} params.name
+     * @param {Array} params.range
+     * @param {number} params.range[0]
+     * @param {number} params.range[1]
+     * @param {number} params.selectedValue
+     * @returns {string}
+     */
     renderFilterYear: function (params) {
       const years = [];
       const range = params.range;
