@@ -184,7 +184,7 @@ const Widget = (function () {
 
   Widget.prototype._renderError = function (error) {
     const code = error.code;
-    const message = code ? code : error.message;
+    const message = code || error.message || 'Что-то пошло не так. Пожалуйста, повторите попытку позднее.';
 
     this.$elems.error.innerHTML = 'Ошибка: ' + message;
   };

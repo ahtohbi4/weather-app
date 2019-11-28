@@ -39,6 +39,7 @@ const Graph = (function () {
 
     this._drawChart(data);
     this._drawAxis(data);
+    this._drawGrid(data);
   };
 
   /**
@@ -127,12 +128,14 @@ const Graph = (function () {
    */
   Graph.prototype._drawBar = function (x, y, width, height) {
     const isPositive = (height >= 0);
-    const color = isPositive ? Graph.COLORS.positive : Graph.COLORS.negative;
+    const color = isPositive ? Graph.COLORS.barPositive : Graph.COLORS.barNegative;
     const fromX = x;
     const fromY = isPositive ? (y - height) : y;
 
     this.canvas.fillStyle = color;
-    this.canvas.fillRect(fromX, fromY, width, Math.abs(height));
+    this.canvas.fillRect(fromX, fromY, Math.ceil(width), Math.abs(height));
+
+    return this;
   };
 
   /**
@@ -142,14 +145,25 @@ const Graph = (function () {
    * @param {number} fromY - A start Y coordinate.
    * @param {number} toX - An end X coordinate.
    * @param {number} toY - An end Y coordinate.
+   * @param {Object} [options={}]
+   * @param {string} [options.color='#fff']
+   * @param {boolean} [options.isDashed=false]
    * @private
    */
-  Graph.prototype._drawLine = function (fromX, fromY, toX, toY) {
+  Graph.prototype._drawLine = function (fromX, fromY, toX, toY, options) {
+    options = options || {};
+
+    const color = options.color || '#fff';
+    const isDashed = options.isDashed || false;
+
     this.canvas.beginPath();
+    this.canvas.setLineDash(isDashed ? [3, 2] : []);
     this.canvas.moveTo(fromX, fromY);
     this.canvas.lineTo(toX, toY);
-    this.canvas.strokeStyle = Graph.COLORS.axis;
+    this.canvas.strokeStyle = color;
     this.canvas.stroke();
+
+    return this;
   };
 
   /**
@@ -158,11 +172,20 @@ const Graph = (function () {
    * @param {string} text - A text to draw.
    * @param {number} x - An X coordinate.
    * @param {number} y - An Y coordinate.
+   * @param {Object} [options]
+   * @param {'center'|'left'|'right'} [options.align='left'] - An alignment of text.
+   * @param {'alphabetic'|'middle'|'top'} [options.baseLine='alphabetic'] - An alignment of text.
    * @private
    */
-  Graph.prototype._drawText = function (text, x, y) {
+  Graph.prototype._drawText = function (text, x, y, options) {
+    options = options || {};
+
+    this.canvas.textAlign = options.align || 'left';
+    this.canvas.textBaseline = options.baseLine || 'alphabetic';
     this.canvas.fillStyle = Graph.COLORS.axis;
     this.canvas.fillText(text, x, y);
+
+    return this;
   };
 
   /**
@@ -175,11 +198,18 @@ const Graph = (function () {
   Graph.prototype._calculateScale = function (data) {
     const graphContainer = this._getGraphContainer();
 
-    const amplitude = Math.max(Math.abs(data.meta.minValue), Math.abs(data.meta.maxValue));
+    const minValue = data.meta.minValue;
+    const minDisplayedValue = (minValue > 0) ? 0 : minValue;
+    const maxValue = data.meta.maxValue;
+    const maxDisplayedValue = (maxValue < 0) ? 0 : maxValue;
+    const amplitude = maxDisplayedValue - minDisplayedValue;
 
     return {
       amplitude: amplitude,
-      scaleY: (graphContainer.height / 2) / amplitude,
+      maxDisplayedValue: maxDisplayedValue,
+      minDisplayedValue: minDisplayedValue,
+      scaleX: graphContainer.width / data.data.length,
+      scaleY: graphContainer.height / amplitude,
     };
   };
 
@@ -188,43 +218,33 @@ const Graph = (function () {
    *
    * @private
    */
-  Graph.prototype._drawAxisX = function () {
+  Graph.prototype._drawAxisX = function (data) {
     const graphContainer = this._getGraphContainer();
+    const scale = this._calculateScale(data);
     const fromX = graphContainer.left;
-    const fromY = graphContainer.top + (graphContainer.height / 2);
+    const fromY = graphContainer.top + (scale.maxDisplayedValue * scale.scaleY);
     const toX = graphContainer.left + graphContainer.width;
 
-    this._drawLine(fromX, fromY, toX, fromY);
+    this._drawLine(fromX, fromY, toX, fromY, { color: Graph.COLORS.axis });
+
+    return this;
   };
 
   /**
    * Draw the Y-axis.
    *
-   * @param {DataType} data
    * @private
    */
-  Graph.prototype._drawAxisY = function (data) {
+  Graph.prototype._drawAxisY = function () {
     const graphContainer = this._getGraphContainer();
-    const scale = this._calculateScale(data);
     const fromX = graphContainer.left;
     const fromY = graphContainer.top;
     const toX = fromX;
     const toY = graphContainer.top + graphContainer.height;
 
-    this._drawLine(fromX, fromY, toX, toY);
+    this._drawLine(fromX, fromY, toX, toY, { color: Graph.COLORS.axis });
 
-    const LABEL_COUNT = 11;
-    const stepSize = graphContainer.height / (LABEL_COUNT - 1);
-
-    for (let i = 0; i < LABEL_COUNT; i++) {
-      const currentScale = i * (2 / (LABEL_COUNT - 1));
-      const tickX = fromX;
-      const tickY = graphContainer.top + (i * stepSize);
-      const label = String(Math.round(scale.amplitude - (scale.amplitude * currentScale)));
-
-      this._drawLine(tickX - 5, tickY, tickX, tickY);
-      this._drawText(label, tickX - 20, tickY + 5);
-    }
+    return this;
   };
 
   /**
@@ -234,8 +254,115 @@ const Graph = (function () {
    * @private
    */
   Graph.prototype._drawAxis = function (data) {
-    this._drawAxisX(data);
-    this._drawAxisY(data);
+    this
+      ._drawAxisX(data)
+      ._drawAxisY();
+  };
+
+  Graph.prototype._drawHorizontalGrid = function (data) {
+    const MIN_GRID_HEIGHT = 50;
+    const graphContainer = this._getGraphContainer();
+    const scale = this._calculateScale(data);
+    const maxPeak = scale.scaleY * Math.max(Math.abs(scale.minDisplayedValue), Math.abs(scale.maxDisplayedValue));
+    const maxGridCount = Math.floor(maxPeak / MIN_GRID_HEIGHT);
+    const gridStep = maxPeak / maxGridCount;
+
+    const centerY = graphContainer.top + (scale.maxDisplayedValue * scale.scaleY);
+    const fromX = graphContainer.left;
+    const toX = graphContainer.left + graphContainer.width;
+
+    let negativeY = centerY;
+    let positiveY = centerY;
+
+    this._drawText('0', fromX - Graph.GRID_LABEL_OFFSET, centerY, {
+      align: 'right',
+      baseLine: 'middle',
+    });
+
+    for (let i = 1; i <= maxGridCount - 1; i++) {
+      negativeY += gridStep;
+      positiveY -= gridStep;
+
+      if (negativeY <= graphContainer.top + graphContainer.height) {
+        const label = '-' + String(Math.round(gridStep * i / scale.scaleY));
+
+        this
+          ._drawLine(fromX, negativeY, toX, negativeY, {
+            color: Graph.COLORS.grid,
+            isDashed: true,
+          })
+          ._drawText(label, fromX - Graph.GRID_LABEL_OFFSET, negativeY, {
+            align: 'right',
+            baseLine: 'middle',
+          });
+      }
+
+      if (positiveY >= graphContainer.top) {
+        const label = String(Math.round(gridStep * i / scale.scaleY));
+
+        this
+          ._drawLine(fromX, positiveY, toX, positiveY, {
+            color: Graph.COLORS.grid,
+            isDashed: true,
+          })
+          ._drawText(label, fromX - Graph.GRID_LABEL_OFFSET, positiveY, {
+            align: 'right',
+            baseLine: 'middle',
+          });
+      }
+    }
+  };
+
+  Graph.prototype._drawVerticalGrid = function (data) {
+    const _this = this;
+    const MIN_GRID_WIDTH = 50;
+    const graphContainer = this._getGraphContainer();
+    const scale = this._calculateScale(data);
+
+    let prevDisplayedYear = data.data[0].t.substr(0, 4);
+    let prevGridLinePosition = graphContainer.left;
+
+    data.data.forEach(function (item, i) {
+      const year = item.t.substr(0, 4);
+
+      if (year === prevDisplayedYear) {
+        return;
+      }
+
+      prevDisplayedYear = year;
+
+      const offsetFromLeft = graphContainer.left + (i * scale.scaleX);
+      const relativeOffset = offsetFromLeft - prevGridLinePosition;
+
+      if (relativeOffset >= MIN_GRID_WIDTH) {
+        const fromX = offsetFromLeft;
+        const fromY = graphContainer.top;
+        const toX = offsetFromLeft;
+        const toY = graphContainer.top + graphContainer.height;
+
+        _this._drawLine(fromX, fromY, toX, toY, {
+          color: Graph.COLORS.grid,
+          isDashed: true,
+        });
+        _this._drawText(year, fromX, toY + Graph.GRID_LABEL_OFFSET, {
+          align: 'center',
+          baseLine: 'top',
+        });
+
+        prevGridLinePosition = offsetFromLeft;
+      }
+    });
+  };
+
+  /**
+   * Draws the grid.
+   *
+   * @param {DataType} data
+   * @private
+   */
+  Graph.prototype._drawGrid = function (data) {
+    this._drawHorizontalGrid(data);
+    this._drawVerticalGrid(data);
   };
 
   /**
@@ -245,24 +372,32 @@ const Graph = (function () {
    * @private
    */
   Graph.prototype._drawChart = function (data) {
+    const _this = this;
     const graphContainer = this._getGraphContainer();
     const scale = this._calculateScale(data);
-    const fromY = graphContainer.top + (graphContainer.height / 2);
-    const dx = 0;
-    const barWidth = (graphContainer.width - dx * (data.data.length + 1)) / data.data.length;
+    const centerY = graphContainer.top + (scale.maxDisplayedValue * scale.scaleY);
+    const barWidth = scale.scaleX;
 
-    for (let i = 0; i < data.data.length; i++) {
-      const height = data.data[i].v * scale.scaleY;
-      const barLeft = graphContainer.left + dx + (i * (dx + barWidth));
+    data.data.forEach(function (item, i) {
+      const barHeight = item.v * scale.scaleY;
+      const fromX = graphContainer.left + (i * barWidth);
 
-      this._drawBar(barLeft, fromY, barWidth, height);
-    }
+      _this._drawBar(fromX, centerY, barWidth, barHeight);
+    });
   };
 
+  Graph.GRID_LABEL_OFFSET = 10;
+
+  /**
+   * The colors constants.
+   *
+   * @type {Object.<{axis: string, grid: string, barNegative: string, barPositive: string}>}
+   */
   Graph.COLORS = {
     axis: '#fff',
-    negative: '#008cff',
-    positive: '#ff2e1c',
+    grid: 'rgba(255, 255, 255, 0.5)',
+    barNegative: '#008cff',
+    barPositive: '#ff2e1c',
   };
 
   return Graph;
